@@ -1,4 +1,3 @@
-// server.js
 import express from 'express';
 import fs from 'fs/promises';
 import path from 'path';
@@ -9,14 +8,12 @@ const PORT = process.env.PORT ?? 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-// Knowledge Markdown ဖိုင်များ (relative path)
 const knowledgeFiles = [
   './knowledge/text-knowledge.md',
   './knowledge/image-knowledge.md',
   './knowledge/coder-knowledge.md',
 ];
 
-// Answers JS module ဖိုင်များ (relative path)
 const answerFiles = [
   './answer/hello-ans.js',
   './answer/sad-ans.js',
@@ -26,10 +23,7 @@ const answerFiles = [
 let knowledgeCache = null;
 let answersCache = null;
 
-/**
- * Load and cache knowledge content from multiple markdown files
- * @returns {Promise<{sources: string}>}
- */
+// Load knowledge markdown files into one big string
 async function loadKnowledge() {
   if (knowledgeCache) return knowledgeCache;
 
@@ -41,20 +35,17 @@ async function loadKnowledge() {
         return content;
       })
     );
-    knowledgeCache = { sources: contents.join('\n\n') };
+    knowledgeCache = contents.join('\n\n');
     console.log('Knowledge base loaded.');
     return knowledgeCache;
   } catch (error) {
     console.error('Failed to load knowledge files:', error);
-    knowledgeCache = { sources: '' };
+    knowledgeCache = '';
     return knowledgeCache;
   }
 }
 
-/**
- * Dynamically import and merge answer modules into one object
- * @returns {Promise<Object>}
- */
+// Load and merge answer modules
 async function loadAllAnswers() {
   if (answersCache) return answersCache;
 
@@ -63,7 +54,7 @@ async function loadAllAnswers() {
   try {
     for (const file of answerFiles) {
       const modulePath = path.resolve(file);
-      const module = await import(modulePath);
+      const module = await import(`file://${modulePath}`);
       if (module?.default && typeof module.default === 'object') {
         Object.assign(answersCache, module.default);
       }
@@ -77,6 +68,31 @@ async function loadAllAnswers() {
   }
 }
 
+// Simple keyword search on knowledge base
+function generateFromKnowledge(question, knowledgeText) {
+  // Example: အကြောင်းအရာ knowledgeText ထဲမှာ question မှာ ပါတဲ့ keywords ရှာပြီး
+  // မရှိရင် fallback ပြန်ပေးမယ်
+
+  const lowerQuestion = question.toLowerCase();
+  const foundSentences = [];
+
+  // knowledgeText ကို အကြောင်းအရာအလိုက် စာပိုဒ်ခွဲပြီး ရှာဖွေမယ်
+  const paragraphs = knowledgeText.split(/\n{2,}/);
+
+  for (const para of paragraphs) {
+    if (para.toLowerCase().includes(lowerQuestion)) {
+      foundSentences.push(para.trim());
+    }
+  }
+
+  if (foundSentences.length > 0) {
+    // စာပိုဒ်တွေထဲက ပထမဆုံးကို ပြန်ပေးမယ်
+    return foundSentences[0];
+  }
+
+  return null;
+}
+
 app.post('/api/query', async (req, res) => {
   try {
     const { question } = req.body;
@@ -85,20 +101,30 @@ app.post('/api/query', async (req, res) => {
       return res.status(400).json({ error: 'Invalid question parameter' });
     }
 
-    // Load knowledge base (currently not used for searching, but ready for expansion)
-    await loadKnowledge();
-
-    // Load answers
+    // Load caches
+    const knowledgeText = await loadKnowledge();
     const answers = await loadAllAnswers();
 
-    // Find answer for exact match question
-    const answer = answers[question.trim()] ?? null;
+    const trimmedQuestion = question.trim();
+
+    // "generate" keyword ပါရင် knowledge ကနေ generate logic သုံးမယ်
+    if (trimmedQuestion.toLowerCase().includes('generate')) {
+      const generatedAnswer = generateFromKnowledge(trimmedQuestion, knowledgeText);
+      if (generatedAnswer) {
+        return res.json({ answer: generatedAnswer });
+      }
+      return res.json({ answer: 'Sorry, I could not generate an answer from knowledge base.' });
+    }
+
+    // မဟုတ်ရင် answer modules မှာ ရှာမယ် (exact match)
+    const answer = answers[trimmedQuestion] ?? null;
 
     if (answer) {
       return res.json({ answer });
-    } else {
-      return res.json({ answer: 'Sorry, I do not have an answer for that question yet.' });
     }
+
+    // မတွေ့ရင် fallback
+    return res.json({ answer: 'Sorry, I do not have an answer for that question yet.' });
   } catch (error) {
     console.error('API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
