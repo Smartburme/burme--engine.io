@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Burme Engine Chatbot</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1 tabindex="0">Burme Engine Knowledge Chatbot</h1>
+    </header>
+    <main>
+      <section id="chat-box" aria-live="polite" aria-label="Chat messages"></section>
+      <form id="chat-form" aria-label="Ask a question form">
+        <input
+          type="text"
+          id="user-input"
+          placeholder="မေးလိုသည်ကို ရိုက်ထည့်ပါ..."
+          autocomplete="off"
+          aria-required="true"
+          required
+        />
+        <button type="submit" aria-label="Send question">ပို့မည်</button>
+      </form>
+    </main>
+  </div>
+  <script type="module" src="./client.js"></script>
+</body>
+</html>
