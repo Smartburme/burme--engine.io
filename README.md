@@ -1,4 +1,14 @@
 # burme--engine 
+
+Burme Engine သည် knowledge base အပေါ်တွင် အခြေခံထားသော AI chatbot project တစ်ခု ဖြစ်သည်။
+
+## Features
+
+- Knowledge sources ကို Markdown ဖိုင်များ (text, image, coder) အလိုက် ခွဲစိတ်ထားသည်။
+- မေးခွန်းအမျိုးအစား အလိုက် အဖြေ JS module များဖြင့် အပိုင်းပိုင်း စီမံထားသည်။
+- Frontend chat UI (`public/page.html`) နှင့် Backend API server (`server.js`) ပါဝင်သည်။
+- ES modules, async/await, modern JavaScript နည်းပညာ အသုံးပြုထားသည်။
+
 # Project Structure 
 ```
 burme-engine/
@@ -24,3 +34,19 @@ burme-engine/
 
 ```
 
+## Installation
+
+Node.js (v14+) လိုအပ်သည်။
+
+```bash
+npm install
+
+Usage
+
+npm start
+
+Server ရပ်တည်ပြီးနောက် http://localhost:3000/public/page.html ကို browser ဖြင့် ဝင်ကြည့်နိုင်သည်။
+
+License
+
+MIT License
