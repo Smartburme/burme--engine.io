@@ -5,34 +5,42 @@ const chatForm = document.getElementById('chat-form');
 const userInput = document.getElementById('user-input');
 
 /**
- * Add message to chat box
+ * Scroll chat box to bottom smoothly
+ */
+function scrollToBottom() {
+  chatBox.scrollTo({ top: chatBox.scrollHeight, behavior: 'smooth' });
+}
+
+/**
+ * Create and append message element
  * @param {'user' | 'bot'} sender
  * @param {string} text
  */
-function addMessage(sender, text) {
+function appendMessage(sender, text) {
   const messageEl = document.createElement('div');
   messageEl.classList.add('message', sender);
   messageEl.textContent = text;
   chatBox.appendChild(messageEl);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  scrollToBottom();
 }
 
 /**
- * Remove last bot message (e.g. loading indicator)
+ * Remove last bot message (e.g. loading message)
  */
 function removeLastBotMessage() {
-  const botMessages = [...chatBox.querySelectorAll('.message.bot')];
+  const botMessages = Array.from(chatBox.querySelectorAll('.message.bot'));
   if (botMessages.length > 0) {
     botMessages[botMessages.length - 1].remove();
   }
 }
 
 /**
- * Send user question to API and show response
+ * Send question to backend API and handle response
  * @param {string} question
  */
 async function sendQuestion(question) {
-  addMessage('bot', 'Loading...');
+  appendMessage('bot', 'Loading...');
+
   try {
     const response = await fetch('/api/query', {
       method: 'POST',
@@ -40,27 +48,43 @@ async function sendQuestion(question) {
       body: JSON.stringify({ question }),
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
+
     removeLastBotMessage();
 
-    if (response.ok && data.answer) {
-      addMessage('bot', data.answer);
+    if (data.answer) {
+      appendMessage('bot', data.answer);
     } else {
-      addMessage('bot', 'Sorry, no answer found.');
+      appendMessage('bot', 'Sorry, no answer available.');
     }
   } catch (error) {
     removeLastBotMessage();
-    addMessage('bot', 'Server error. Please try again.');
+    appendMessage('bot', 'Error: Unable to get response. Please try again later.');
     console.error('Fetch error:', error);
   }
 }
 
-chatForm.addEventListener('submit', e => {
-  e.preventDefault();
+/**
+ * Handle form submission
+ */
+chatForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+
   const question = userInput.value.trim();
   if (!question) return;
 
-  addMessage('user', question);
+  appendMessage('user', question);
   userInput.value = '';
   sendQuestion(question);
+});
+
+/**
+ * Accessibility: focus on input on page load
+ */
+window.addEventListener('DOMContentLoaded', () => {
+  userInput.focus();
 });
