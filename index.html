@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Burme Engine Loading...</title>
+  <link rel="stylesheet" href="./public/style.css" />
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--color-primary);
+      color: var(--color-text-light);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .loader {
+      font-size: 1.5rem;
+      animation: blink 1.2s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div class="loader" role="alert" aria-live="assertive">Loading Burme Engine...</div>
+
+  <script>
+    setTimeout(() => {
+      window.location.href = './public/page.html';
+    }, 3000);
+  </script>
+</body>
+</html>
