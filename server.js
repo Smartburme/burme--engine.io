@@ -1,6 +1,4 @@
-// server.js
 import express from 'express';
-import fs from 'fs/promises';
 import path from 'path';
 
 const app = express();
@@ -9,28 +7,30 @@ const PORT = process.env.PORT ?? 3000;
 app.use(express.json());
 app.use(express.static('public'));
 
-let knowledgeCache = null;
+// List of answer files relative to project root
+const answerFiles = [
+  './answer/hello-ans.js',
+  './answer/sad-ans.js',
+  './answer/happy-ans.js',
+];
+
+let combinedAnswers = null;
 
 /**
- * Load and cache knowledge data from Markdown file
+ * Dynamic import and combine all answer modules into one object
  */
-async function loadKnowledge() {
-  if (knowledgeCache) return knowledgeCache;
+async function loadAllAnswers() {
+  if (combinedAnswers) return combinedAnswers;
 
-  const mdFilePath = path.resolve('./knowledge/sources.md');
-  const mdContent = await fs.readFile(mdFilePath, 'utf-8');
+  combinedAnswers = {};
 
-  // TODO: Expand with real embedding or processing here
-  knowledgeCache = { sources: mdContent };
-  return knowledgeCache;
-}
+  for (const file of answerFiles) {
+    const modulePath = path.resolve(file);
+    const module = await import(modulePath);
+    Object.assign(combinedAnswers, module.default);
+  }
 
-/**
- * Load static answers from answers.js dynamically
- */
-async function loadAnswers() {
-  const { default: answers } = await import('./answers.js');
-  return answers;
+  return combinedAnswers;
 }
 
 app.post('/api/query', async (req, res) => {
@@ -40,14 +40,12 @@ app.post('/api/query', async (req, res) => {
       return res.status(400).json({ error: 'Invalid question' });
     }
 
-    await loadKnowledge(); // For future use or embedding cache
-
-    const answers = await loadAnswers();
+    const answers = await loadAllAnswers();
     const answer = answers[question] ?? null;
 
     return res.json({ answer });
-  } catch (err) {
-    console.error('API error:', err);
+  } catch (error) {
+    console.error('API error:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
